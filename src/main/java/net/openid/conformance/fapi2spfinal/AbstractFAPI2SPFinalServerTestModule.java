@@ -446,7 +446,9 @@ public abstract class AbstractFAPI2SPFinalServerTestModule extends AbstractRedir
 		}
 
 		// make sure the server configuration passes some basic sanity checks
-		if (clientCredentialsGrant) {
+		if (clientCredentialsGrant || !usesAuthorizationEndpoint()) {
+			// RFC 8414 section 2: authorization_endpoint is required unless no supported grant
+			// type uses the authorization endpoint (client credentials, pre-authorized code)
 			callAndStopOnFailure(CheckClientCredentialsOnlyServerConfiguration.class);
 		}
 		else {
@@ -481,6 +483,14 @@ public abstract class AbstractFAPI2SPFinalServerTestModule extends AbstractRedir
 
 	protected void setupResourceEndpoint() {
 		call(profileBehavior.setupResourceEndpoint());
+	}
+
+	/**
+	 * Whether the flow under test uses the authorization endpoint. When it doesn't, the
+	 * server's metadata need not advertise one (RFC 8414 section 2).
+	 */
+	protected boolean usesAuthorizationEndpoint() {
+		return true;
 	}
 
 	protected void onConfigure(JsonObject config, String baseUrl) {

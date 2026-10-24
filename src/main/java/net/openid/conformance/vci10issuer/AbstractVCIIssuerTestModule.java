@@ -196,6 +196,11 @@ public abstract class AbstractVCIIssuerTestModule extends AbstractFAPI2SPFinalSe
 	}
 
 	@Override
+	protected boolean usesAuthorizationEndpoint() {
+		return vciGrantType != VCIGrantType.PRE_AUTHORIZATION_CODE;
+	}
+
+	@Override
 	public void configure(JsonObject config, String baseUrl, String externalUrlOverride, String baseMtlsUrl) {
 		initializeVciVariants();
 		List<String> requiredProofTypes = getRequiredProofTypes();
@@ -397,6 +402,10 @@ public abstract class AbstractVCIIssuerTestModule extends AbstractFAPI2SPFinalSe
 					callAndStopOnFailure(VCIUseStaticTxCodeFromConfig.class, ConditionResult.FAILURE, "OID4VCI-1FINAL-3.5");
 
 					performPreAuthorizationCodeFlow();
+				} else if (!credentialOfferRequiresTxCode()) {
+					// OID4VCI 1.0 section 4.1.1: tx_code is optional; when the offer has none the
+					// wallet must not ask the user for one or send one
+					performPreAuthorizationCodeFlow();
 				} else {
 					waitForTxCode();
 				}
@@ -431,6 +440,16 @@ public abstract class AbstractVCIIssuerTestModule extends AbstractFAPI2SPFinalSe
 			ImmutableMap.of(
 				"returnUrl", "/log-detail.html?log=" + getId()
 			));
+	}
+
+	protected boolean credentialOfferRequiresTxCode() {
+		JsonElement grants = env.getElementFromObject("vci", "credential_offer.grants");
+		if (grants == null || !grants.isJsonObject()) {
+			return true;
+		}
+		JsonElement preAuthorizedCodeGrant = grants.getAsJsonObject().get("urn:ietf:params:oauth:grant-type:pre-authorized_code");
+		return preAuthorizedCodeGrant == null || !preAuthorizedCodeGrant.isJsonObject()
+			|| preAuthorizedCodeGrant.getAsJsonObject().has("tx_code");
 	}
 
 	protected void waitForTxCode() {

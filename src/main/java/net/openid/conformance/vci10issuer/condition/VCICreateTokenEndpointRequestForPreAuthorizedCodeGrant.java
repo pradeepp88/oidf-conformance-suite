@@ -19,7 +19,10 @@ public class VCICreateTokenEndpointRequestForPreAuthorizedCodeGrant extends Abst
 		JsonObject o = new JsonObject();
 		o.addProperty("grant_type", "urn:ietf:params:oauth:grant-type:pre-authorized_code");
 		o.addProperty("pre-authorized_code", preAuthorizedCode);
-		o.addProperty("tx_code", txCodeValue);
+		if (txCodeValue != null) {
+			// Only sent when the credential offer asked for a tx_code (OID4VCI 1.0 section 6.1)
+			o.addProperty("tx_code", txCodeValue);
+		}
 
 		env.putObject("token_endpoint_request_form_parameters", o);
 

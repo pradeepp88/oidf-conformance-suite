@@ -27,7 +27,10 @@ public class VCIExtractPreAuthorizedCodeAndTxCodeFromCredentialOffer extends Abs
 		env.putString("vci", "pre-authorized_code", preAuthorizedCode);
 
 		String txCodeValue = env.getString("vci", "tx_code");
-		env.putString("vci", "pre-authorized_code_tx_code_value", txCodeValue);
+		if (txCodeValue != null) {
+			// Absent when the credential offer has no tx_code (OID4VCI 1.0 section 4.1.1)
+			env.putString("vci", "pre-authorized_code_tx_code_value", txCodeValue);
+		}
 
 		logSuccess("Found pre-authorized_code in Pre-authorized code grant", args("pre-authorized_code", preAuthorizedCode, "tx_code_value", txCodeValue, "credential_offer", credentialOfferObject));
 		return env;
